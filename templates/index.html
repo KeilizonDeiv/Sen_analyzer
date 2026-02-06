@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analyzer - AI Review Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        .input-section {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .result {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            animation: slideIn 0.5s;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result.positive {
+            background: #d4edda;
+            border: 2px solid #28a745;
+        }
+        
+        .result.negative {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+        }
+        
+        .sentiment-label {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .sentiment-label.positive {
+            color: #28a745;
+        }
+        
+        .sentiment-label.negative {
+            color: #dc3545;
+        }
+        
+        .confidence {
+            font-size: 1.1em;
+            color: #555;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .history {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .history-item {
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .history-item.positive {
+            border-left-color: #28a745;
+        }
+        
+        .history-item.negative {
+            border-left-color: #dc3545;
+        }
+        
+        .history-text {
+            font-style: italic;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        
+        .history-meta {
+            font-size: 0.9em;
+            color: #777;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 Sentiment Analyzer</h1>
+            <p class="subtitle">AI-Powered Customer Review Analysis</p>
+        </header>
+        
+        <div class="card">
+            <div class="input-section">
+                <label for="reviewText">Enter a customer review to analyze:</label>
+                <textarea 
+                    id="reviewText" 
+                    rows="5" 
+                    placeholder="Example: This product exceeded my expectations! The quality is amazing and shipping was fast. Highly recommend!"
+                ></textarea>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn-primary" onclick="analyzeReview()">Analyze Sentiment</button>
+                <button class="btn-secondary" onclick="clearInput()">Clear</button>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 10px;">Analyzing...</p>
+            </div>
+            
+            <div class="error" id="error"></div>
+            
+            <div class="result" id="result">
+                <div class="sentiment-label" id="sentimentLabel"></div>
+                <div class="confidence" id="confidenceText"></div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">📊 Statistics</h2>
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-box">
+                    <div class="stat-value" id="totalCount">0</div>
+                    <div class="stat-label">Total Analyzed</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="positiveCount">0</div>
+                    <div class="stat-label">Positive</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="negativeCount">0</div>
+                    <div class="stat-label">Negative</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="avgConfidence">0%</div>
+                    <div class="stat-label">Avg Confidence</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">📝 Recent Analysis</h2>
+            <div class="history" id="history">
+                <p style="text-align: center; color: #999;">No analysis yet. Try analyzing a review above!</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function analyzeReview() {
+            const text = document.getElementById('reviewText').value;
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const error = document.getElementById('error');
+            
+            // Hide previous results
+            result.style.display = 'none';
+            error.style.display = 'none';
+            
+            if (!text.trim()) {
+                showError('Please enter some text to analyze');
+                return;
+            }
+            
+            // Show loading
+            loading.style.display = 'block';
+            
+            // Send request to backend
+            fetch('/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text: text })
+            })
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = 'none';
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                // Display result
+                const sentimentLabel = document.getElementById('sentimentLabel');
+                const confidenceText = document.getElementById('confidenceText');
+                
+                sentimentLabel.textContent = data.sentiment;
+                sentimentLabel.className = `sentiment-label ${data.sentiment.toLowerCase()}`;
+                
+                confidenceText.textContent = `Confidence: ${data.confidence.toFixed(2)}%`;
+                
+                result.className = `result ${data.sentiment.toLowerCase()}`;
+                result.style.display = 'block';
+                
+                // Update statistics and history
+                updateStats();
+                updateHistory();
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                showError('An error occurred while analyzing the text');
+                console.error(err);
+            });
+        }
+        
+        function clearInput() {
+            document.getElementById('reviewText').value = '';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+        }
+        
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.textContent = message;
+            error.style.display = 'block';
+        }
+        
+        function updateStats() {
+            fetch('/stats')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('totalCount').textContent = data.total;
+                document.getElementById('positiveCount').textContent = data.positive;
+                document.getElementById('negativeCount').textContent = data.negative;
+                document.getElementById('avgConfidence').textContent = data.avg_confidence.toFixed(1) + '%';
+            });
+        }
+        
+        function updateHistory() {
+            fetch('/history')
+            .then(response => response.json())
+            .then(data => {
+                const historyDiv = document.getElementById('history');
+                
+                if (data.length === 0) {
+                    historyDiv.innerHTML = '<p style="text-align: center; color: #999;">No analysis yet. Try analyzing a review above!</p>';
+                    return;
+                }
+                
+                // Show last 10 items in reverse order (most recent first)
+                const recentItems = data.slice(-10).reverse();
+                
+                historyDiv.innerHTML = recentItems.map(item => `
+                    <div class="history-item ${item.sentiment.toLowerCase()}">
+                        <div class="history-text">"${item.text}"</div>
+                        <div class="history-meta">
+                            <strong>${item.sentiment}</strong> (${item.confidence.toFixed(2)}%) - ${item.timestamp}
+                        </div>
+                    </div>
+                `).join('');
+            });
+        }
+        
+        // Allow Enter key to submit (with Shift+Enter for new line)
+        document.getElementById('reviewText').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                analyzeReview();
+            }
+        });
+        
+        // Load initial stats and history on page load
+        window.addEventListener('load', function() {
+            updateStats();
+            updateHistory();
+        });
+    </script>
+</body>
+</html>
