@@ -1,15 +1,14 @@
 """
-Sentiment Analysis Model Trainer
-Trains a custom sentiment classifier on IMDB movie reviews dataset
+Sentiment Analysis Model Trainer with Multi-Emotion Detection
+Trains a custom sentiment + emotion classifier
 """
 
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.metrics import accuracy_score, classification_report
 import pickle
 import re
 import nltk
@@ -33,6 +32,15 @@ class SentimentAnalyzer:
         self.model = LogisticRegression(max_iter=1000, random_state=42)
         self.lemmatizer = WordNetLemmatizer()
         self.stop_words = set(stopwords.words('english'))
+        # Emotion labels: 0=Negative, 1=Neutral, 2=Happy, 3=Angry, 4=Sad, 5=Positive
+        self.emotion_map = {
+            0: 'Negative',
+            1: 'Neutral',
+            2: 'Happy',
+            3: 'Angry',
+            4: 'Sad',
+            5: 'Positive'
+        }
         
     def preprocess_text(self, text):
         """Clean and preprocess text data"""
@@ -89,8 +97,8 @@ class SentimentAnalyzer:
         accuracy = accuracy_score(y_test, y_pred)
         print(f"\nModel Accuracy: {accuracy:.4f}")
         print("\nClassification Report:")
-        print(classification_report(y_test, y_pred, 
-                                    target_names=['Negative', 'Positive']))
+        emotion_names = [self.emotion_map[i] for i in range(len(self.emotion_map))]
+        print(classification_report(y_test, y_pred, target_names=emotion_names))
         
         return accuracy
     
@@ -113,10 +121,10 @@ class SentimentAnalyzer:
 
 
 def create_sample_dataset():
-    """Create a sample dataset for demonstration"""
-    # Sample reviews (mix of positive and negative)
+    """Create a sample dataset with emotion labels"""
+    # Sample reviews with emotions: 0=Negative, 1=Neutral, 2=Happy, 3=Angry, 4=Sad, 5=Positive
     reviews = [
-        # Positive reviews
+        # Positive/Happy (2, 5)
         "This product is absolutely amazing! Best purchase I've ever made.",
         "Excellent quality and fast shipping. Highly recommend!",
         "Love it! Exceeded all my expectations.",
@@ -128,28 +136,40 @@ def create_sample_dataset():
         "Very happy with this purchase. Great quality!",
         "Superb! Couldn't ask for anything better.",
         
-        # Negative reviews
+        # Negative/Angry (0, 3)
         "Terrible product. Complete waste of money.",
         "Very disappointed. Poor quality and arrived damaged.",
         "Don't buy this. It broke after one day.",
         "Awful experience. Would not recommend to anyone.",
         "Save your money. This is garbage.",
         "Worst purchase ever. Doesn't work as advertised.",
-        "Horrible quality. Requesting a refund immediately.",
-        "Completely useless. Very frustrated with this.",
-        "Poor customer service and defective product.",
-        "Extremely disappointed. This is a scam.",
+        "I'm so angry about this purchase. Horrible quality.",
+        "This is infuriating! Completely useless.",
+        "Extremely frustrated with this product.",
+        "Disgusted with this purchase. Absolute disaster.",
+        
+        # Sad/Disappointed (4)
+        "I'm heartbroken by the quality. Really sad about this.",
+        "This made me really sad. It was supposed to be special.",
+        "Disappointed and sad with how this turned out.",
+        "Feeling down about this purchase.",
+        
+        # Neutral (1)
+        "It's okay, nothing special.",
+        "Average product, does what it says.",
+        "Not great, not terrible.",
+        "It's fine, I guess.",
     ]
     
-    # Labels: 1 for positive, 0 for negative
-    labels = [1]*10 + [0]*10
+    # Labels: 2=Happy, 5=Positive, 0=Negative, 3=Angry, 4=Sad, 1=Neutral
+    labels = [2]*5 + [5]*5 + [0]*5 + [3]*5 + [4]*4 + [1]*4
     
     return reviews, labels
 
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("Sentiment Analysis Model Training")
+    print("Sentiment & Emotion Analysis Model Training")
     print("=" * 60)
     
     # Create sample dataset
@@ -182,12 +202,14 @@ if __name__ == "__main__":
     test_reviews = [
         "This is great! I love it.",
         "Terrible product, very disappointed.",
-        "It's okay, nothing special."
+        "I'm so angry with this. What a disaster!",
+        "It's okay, nothing special.",
+        "I'm really sad about this purchase."
     ]
     
     for review in test_reviews:
         predictions, probabilities = analyzer.predict(review)
-        sentiment = "Positive" if predictions[0] == 1 else "Negative"
+        emotion = analyzer.emotion_map[predictions[0]]
         confidence = probabilities[0][predictions[0]] * 100
         print(f"\nReview: {review}")
-        print(f"Sentiment: {sentiment} (Confidence: {confidence:.2f}%)")
+        print(f"Emotion: {emotion} (Confidence: {confidence:.2f}%)")
