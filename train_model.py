@@ -15,7 +15,6 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
-# Download required NLTK data
 try:
     nltk.data.find('corpora/stopwords')
 except LookupError:
@@ -32,7 +31,6 @@ class SentimentAnalyzer:
         self.model = LogisticRegression(max_iter=1000, random_state=42)
         self.lemmatizer = WordNetLemmatizer()
         self.stop_words = set(stopwords.words('english'))
-        # Emotion labels: 0=Negative, 1=Neutral, 2=Happy, 3=Angry, 4=Sad, 5=Positive
         self.emotion_map = {
             0: 'Negative',
             1: 'Neutral',
@@ -44,19 +42,14 @@ class SentimentAnalyzer:
         
     def preprocess_text(self, text):
         """Clean and preprocess text data"""
-        # Convert to lowercase
         text = text.lower()
         
-        # Remove HTML tags
         text = re.sub(r'<.*?>', '', text)
         
-        # Remove URLs
         text = re.sub(r'http\S+|www\S+|https\S+', '', text)
-        
-        # Remove special characters and digits
+
         text = re.sub(r'[^a-zA-Z\s]', '', text)
-        
-        # Tokenize and remove stopwords
+
         words = text.split()
         words = [self.lemmatizer.lemmatize(word) for word in words 
                  if word not in self.stop_words and len(word) > 2]
