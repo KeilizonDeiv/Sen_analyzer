@@ -68,24 +68,19 @@ def analyze():
             logger.warning("Empty text submission")
             return jsonify({'error': 'Please enter some text to analyze'}), 400
         
-        # Check cache first
         text_hash = hash(text)
         if text_hash in prediction_cache:
             logger.info(f"Cache hit for text: {text[:50]}...")
             return jsonify(prediction_cache[text_hash])
         
-        # Perform prediction
         predictions, probabilities = analyzer.predict(text)
         emotion_label = predictions[0]
         emotion = analyzer.emotion_map.get(emotion_label, 'Unknown')
         confidence = float(probabilities[0][emotion_label] * 100)
         
-        # Get all emotion probabilities for visualization
-        emotion_details = {}
         for idx, emotion_name in analyzer.emotion_map.items():
             emotion_details[emotion_name] = float(probabilities[0][idx] * 100)
         
-        # Store in history
         result = {
             'text': text,
             'emotion': emotion,
