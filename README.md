@@ -192,7 +192,3 @@ This project is open source and available for educational and portfolio purposes
 ## 👨‍💻 Author
 
 Created as a portfolio project to demonstrate AI/ML and web development skills.
-
----
-
-**Note:** This project uses a sample dataset for demonstration. For production use, train the model on larger, domain-specific datasets for better accuracy and reliability.
